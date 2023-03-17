@@ -64,8 +64,18 @@ Get the connecton string to the SQL database and initialize the DAB tool.
 https://learn.microsoft.com/en-us/azure/data-api-builder/get-started/get-started-azure-sql
 
 ```
-az sql db show-connection-string --server $sqlServerName --database $databaseName --client ado.net --auth-type sqlpassword --ids /subscriptions/$sid/resourceGroups/$rg/providers/Microsoft.Sql/servers/myserver/databases/mydatabase
+$sqlCN = az sql db show-connection-string --server $sqlServerName --name $databaseName --client ado.net -o tsv
+$sqlCN = $sqlCN.replace('<username>',$administratorLogin).replace('<password>',$administratorPassword)
 
-
+# initialize the DAB config file
 dab init --database-type "mssql" --connection-string $sqlcn --host-mode "Development"
+
+# add the Customers entity (view)
+dab add Customers --source Website.Customers --permissions "anonymous:read"  --source.type "view" 
+
+dab start
 ```
+
+you can now check the API hosted on localhost:5000
+
+![](imgs/customers-rest.jpg)
