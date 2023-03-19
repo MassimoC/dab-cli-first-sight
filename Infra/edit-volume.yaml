@@ -1,0 +1,70 @@
+id: /subscriptions/<yoursubscriptionidhere>/resourceGroups/rg-dabfirstsight/providers/Microsoft.App/containerapps/dabfirstsight-customers
+identity:
+  type: None
+location: West Europe
+name: dabfirstsight-customers
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    dapr: null
+    ingress:
+      allowInsecure: false
+      customDomains: null
+      exposedPort: 0
+      external: true
+      fqdn: dabfirstsight-customers.calmcoast-12345678.westeurope.azurecontainerapps.io
+      ipSecurityRestrictions: null
+      targetPort: 5000
+      traffic:
+      - latestRevision: true
+        weight: 100
+      transport: Auto
+    maxInactiveRevisions: null
+    registries: null
+    secrets: null
+  environmentId: /subscriptions/<yoursubscriptionidhere>/resourceGroups/rg-dabfirstsight/providers/Microsoft.App/managedEnvironments/env-dabfirstsight
+  eventStreamEndpoint: https://westeurope.azurecontainerapps.dev/subscriptions/<yoursubscriptionidhere>/resourceGroups/rg-dabfirstsight/containerApps/dabfirstsight-customers/eventstream
+  latestRevisionFqdn: dabfirstsight-customers--8uoq66l.calmcoast-12345678.westeurope.azurecontainerapps.io
+  latestRevisionName: dabfirstsight-customers--8uoq66l
+  managedEnvironmentId: /subscriptions/<yoursubscriptionidhere>/resourceGroups/rg-dabfirstsight/providers/Microsoft.App/managedEnvironments/env-dabfirstsight
+  outboundIpAddresses:
+  - 11.11.11.11
+  provisioningState: Succeeded
+  template:
+    containers:
+    - image: mcr.microsoft.com/azure-databases/data-api-builder:latest
+      name: dabfirstsight-customers
+      env:
+        - name: DOTNET_ENVIRONMENT
+          value: Production
+        - name: ASPNETCORE_ENVIRONMENT
+          value: Production
+      args:
+        - "--ConfigFileName=./dabconfig/dab-config.json"
+      volumeMounts:
+      - volumeName: azure-files-volume
+        mountPath: /App/dabconfig
+      resources:
+        cpu: 0.5
+        ephemeralStorage: 2Gi
+        memory: 1Gi
+    initContainers: null
+    revisionSuffix: ''
+    scale:
+      maxReplicas: 8
+      minReplicas: 1
+      rules: null
+    volumes:
+    - name: azure-files-volume
+      storageType: AzureFile
+      storageName: dabconfig
+  workloadProfileType: null
+resourceGroup: rg-dabfirstsight
+systemData:
+  createdAt: '2023-03-17T16:19:27.2937137'
+  createdBy: massimo.crippa@domain.ext
+  createdByType: User
+  lastModifiedAt: '2023-03-17T16:19:27.2937137'
+  lastModifiedBy: massimo.crippa@domain.ext
+  lastModifiedByType: User
+type: Microsoft.App/containerApps

@@ -1,6 +1,6 @@
 #!/bin/bash
 LOCATION="westeurope"
-PROJECT="dabfsight"
+PROJECT="dabfirstsight"
 RESOURCE_GROUP="rg-${PROJECT}"
 LOCATION="westeurope"
 DAB_CONFIG_FILE="../dab-config.json"
@@ -66,6 +66,7 @@ echo $REGISTRY_URL
 # *****Storage account
 # ******************************************** 
 STORAGE_ACCOUNT="${PROJECT}"
+FILE_SHARE="dabconfig"
 echo "... Creating storage account [$STORAGE_ACCOUNT]" 
 
 az storage account create --name $STORAGE_ACCOUNT \
@@ -76,11 +77,11 @@ az storage account create --name $STORAGE_ACCOUNT \
 echo "... Retrieving storage connection string"
 STORAGE_CONNECTION_STRING=$(az storage account show-connection-string --name $STORAGE_ACCOUNT -g $RESOURCE_GROUP -o tsv)
 
-echo "... Creating file share"
-az storage share create -n dabconfig --connection-string $STORAGE_CONNECTION_STRING
+echo "... Creating file share [$FILE_SHARE]"
+az storage share create -n $FILE_SHARE --connection-string $STORAGE_CONNECTION_STRING
 
 echo "... Uploading DAB configuration file [$DAB_CONFIG_FILE]" 
-az storage file upload --source $DAB_CONFIG_FILE --path "dab-config.json" --share-name "dabconfig" \
+az storage file upload --source $DAB_CONFIG_FILE --path "dab-config.json" --share-name $FILE_SHARE \
   --connection-string $STORAGE_CONNECTION_STRING
 
 echo "... Retrieving storage key" 
@@ -107,10 +108,10 @@ az containerapp env create \
 echo "... Mount storage account [$STORAGE_ACCOUNT]"
 az containerapp env storage set --name $CONTAINERAPPS_ENVIRONMENT \
   --resource-group $RESOURCE_GROUP \
-  --storage-name $STORAGE_ACCOUNT \
+  --storage-name $FILE_SHARE \
   --azure-file-account-name $STORAGE_ACCOUNT \
   --azure-file-account-key $STORAGE_KEY \
-  --azure-file-share-name "dabconfig" \
+  --azure-file-share-name $FILE_SHARE \
   --access-mode ReadWrite
 
 echo "... Creating app [$APP_NAME] in Azure Container Apps"
@@ -121,12 +122,21 @@ az containerapp create \
   --environment $CONTAINERAPPS_ENVIRONMENT \
   --ingress external \
   --target-port 5000 \
-  --min-replicas 0 \
-  --command "dotnet Azure.DataApiBuilder.Service.dll --ConfigFileName /dabconfig/dab-config.json"
+  --min-replicas 0 
+  
+  #--command "dotnet Azure.DataApiBuilder.Service.dll --ConfigFileName /dabconfig/dab-config.json"
 
-
-ACA_FQDN = az containerapp show -n $APP_NAME -g $RESOURCE_GROUP --query properties.configuration.ingress.fqdn -o tsv
+ACA_FQDN=$(az containerapp show -n $APP_NAME -g $RESOURCE_GROUP --query properties.configuration.ingress.fqdn -o tsv)
 
 echo "... App [$APP_NAME] available at this address [https://$ACA_FQDN]"
+
+echo "... STEP1 -  Run the following command to get the YAML of the aca application"
+echo "az containerapp show -n $APP_NAME -g $RESOURCE_GROUP -o yaml > edit-volume.yaml"
+
+echo "... STEP2 - Edit volumes and volumeMounts"
+
+echo "... STEP3 - Run the following command to get the YAML of the aca application"
+echo "az containerapp update --name $APP_NAME --resource-group $RESOURCE_GROUP --yaml edit-volume.yaml"
+echo "az containerapp revision list --name $APP_NAME --resource-group $RESOURCE_GROUP -o table"
 
 echo "... Script completed"

@@ -1,4 +1,4 @@
-# Generate a REST API from SQL 
+# Generate a REST API from SQL - run on localhost and Azure Container Apps
 
 Install the DAB CLI
 
@@ -57,7 +57,7 @@ az sql db import -s $sqlServerName -n $databaseName -g $rg -u $administratorLogi
 
 ```
 
-## DAB
+## DAB on Localhost
 
 Get the connecton string to the SQL database and initialize the DAB tool.
 
@@ -79,3 +79,65 @@ dab start
 you can now check the API hosted on localhost:5000
 
 ![](imgs/customers-rest.jpg)
+
+## DAB on Azure Container Apps
+
+```
+# run the aca.sh script
+sh aca.sh
+```
+
+The script is creates:
+- resource group
+- log analytics
+- container registry (not used in this example)
+- storage account (persistent volume for aca)
+- create file share
+- upload dab config file to share
+- container apps environment
+- mount file share on container apps environment
+- create container apps application
+
+
+Before completing, the aca.sh script print out the last steps to complete this exercise.
+
+step 1 - save the ACA application configuration to a YAML file (e.g. edit-volume.yaml)
+
+```
+az containerapp show -n dabfirstsight-customers -g rg-dabfirstsight -o yaml > edit-volume.yaml
+```
+
+step 2 - update the YAML to introduce volumes, volumeMounts and args
+
+```
+# the relevant changes are volumes, volumeMounts and args
+
+    containers:
+    - image: mcr.microsoft.com/azure-databases/data-api-builder:latest
+      name: dabfirstsight-customers
+      args:
+        - "--ConfigFileName=./dabconfig/dab-config.json"
+      volumeMounts:
+      - volumeName: azure-files-volume
+        mountPath: /App/dabconfig
+    volumes:
+    - name: azure-files-volume
+      storageType: AzureFile
+      storageName: dabconfig
+      
+```
+step 3 - update the ACA application
+
+```
+res=$(az containerapp update -n dabfirstsight-customers -g rg-dabfirstsight --yaml edit-volume.yaml)
+```
+
+step 4 - check the status of the ACA revision
+
+```
+az containerapp revision list -n dabfirstsight-customers -g rg-dabfirstsight -o table
+```
+
+The new revision is up an running and the previous revision is eventually phased out.
+
+![](imgs/revisions.jpg)
